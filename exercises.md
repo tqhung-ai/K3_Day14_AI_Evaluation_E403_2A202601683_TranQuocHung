@@ -349,19 +349,25 @@ verbosity bias và self-preference bằng cách nào?
 Chỉ làm sau khi hoàn thành 3.1–3.3. Chọn hai framework trong RAGAS, DeepEval
 và TruLens; chạy hoặc thiết kế một so sánh có cùng input dataset.
 
-| Tiêu chí | Framework 1: ____ | Framework 2: ____ |
+| Tiêu chí | Framework 1: RAGAS | Framework 2: DeepEval |
 |---|---|---|
-| Setup complexity | | |
-| Metrics available | | |
-| CI/CD integration | | |
-| Kết quả trên cùng dataset | | |
-| Insight rút ra | | |
+| Setup complexity | Python package và LLM/embedding configuration; phù hợp offline RAG evaluation. | Pytest-native metric objects; setup thuận tiện khi dự án đã dùng pytest. |
+| Metrics available | Faithfulness, answer relevance, context recall/precision và nhiều RAG metrics chuẩn hóa. | Faithfulness, answer relevancy, contextual precision/recall, hallucination và custom LLM metrics. |
+| CI/CD integration | Chạy script/JSON report trong pipeline; quality gate cần tự viết. | Tích hợp tự nhiên với pytest assertions và CI test reports. |
+| Kết quả trên cùng dataset | Cùng 20 QA nhưng score có thể khác heuristic core vì RAGAS đánh giá entailment/semantic grounding nghiêm hơn. | Cùng input có thể cho score khác do judge prompt, model và aggregation; thuận tiện block từng test case. |
+| Insight rút ra | Mạnh về chuẩn hóa RAG retrieval/grounding offline. | Mạnh về regression tests và CI/CD quality gates. |
 
 - Scores có nhất quán không?
 - Framework nào strict hơn và vì sao?
 - Hai framework có tìm ra cùng failure cases không?
 
-> *Phân tích:*
+> *Phân tích:* Hai framework không nhất thiết cho cùng score dù dùng cùng input vì judge
+> prompt, model và aggregation khác nhau. RAGAS phù hợp hơn để phân tích RAG
+> grounding/retrieval và thường strict hơn với entailment; DeepEval thuận tiện hơn cho
+> CI vì metric assertions chạy như unit tests. Cả hai có thể phát hiện A02 refusal,
+> A01 grounding và M07 incompleteness nếu rubric có safety/completeness criteria,
+> nhưng các case borderline có thể khác. Vì vậy cần cố định model/temperature, dùng
+> cùng golden set và calibrate thresholds với human labels trước khi so sánh tuyệt đối.
 
 ### Exercise 3.5 — Retrieval Reranking (Bonus +5)
 
@@ -376,20 +382,25 @@ thay đổi Context Recall hay không.
 
 | ID | Recall before | Recall after | Precision before | Precision after | Delta Precision |
 |---|---:|---:|---:|---:|---:|
-| | | | | | |
-| | | | | | |
-| | | | | | |
-| | | | | | |
-| | | | | | |
-| **Avg** | | | | | |
+| E01 | 0.789 | 0.789 | 1.000 | 1.000 | +0.000 |
+| M02 | 0.950 | 0.950 | 1.000 | 1.000 | +0.000 |
+| M07 | 0.833 | 0.833 | 0.804 | 1.000 | +0.196 |
+| H03 | 0.800 | 0.800 | 1.000 | 1.000 | +0.000 |
+| A01 | 0.619 | 0.619 | 0.888 | 1.000 | +0.113 |
+| **Avg** | **0.798** | **0.798** | **0.938** | **1.000** | **+0.062** |
 
 **Tại sao Recall dự kiến không đổi?**
 
-> *Câu trả lời:*
+> *Câu trả lời:* Recall không đổi vì reranking chỉ thay đổi thứ tự chunks, không
+> thêm hoặc xóa chunk. Context Recall dùng union của toàn bộ retrieved chunks nên
+> tập evidence và token coverage vẫn giống hệt trước rerank.
 
 **Khi nào reranking không đủ và cần sửa retriever/query/chunking?**
 
-> *Câu trả lời:*
+> *Câu trả lời:* Reranking không đủ khi evidence không xuất hiện trong top-k, query
+> dùng từ khác hẳn corpus hoặc chunking cắt policy thành mảnh thiếu điều kiện. Khi
+> đó cần sửa query expansion, retriever/hybrid search, top-k, metadata filtering
+> hoặc chunk boundaries; reranker chỉ sắp xếp những chunks đã retrieve được.
 
 ---
 
